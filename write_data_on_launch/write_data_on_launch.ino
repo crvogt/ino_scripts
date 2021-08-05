@@ -1,4 +1,5 @@
 #include <SD.h>
+
 const int chipSelect = 4;
 
 int inPin = 3;
@@ -12,36 +13,20 @@ long time = 0;
 long debounce = 200;
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(inPin, INPUT);
   pinMode(outPin, OUTPUT);
+  pinMode(10, OUTPUT);
 }
 
 void loop(){
-  reading = digitalRead(inPin);
 
   time = millis();
 
-  digitalWrite(outPin, stateLED);
-
-  previous = reading;
-
-  Serial.begin(9600);
-  pinMode(10, OUTPUT);
-
-  if(!SD.begin(chipSelect)){
-    //
+  // Check SD is available
+  if(!SD.begin(chipSelect)){ 
   }
-  String dataString = "";
-
-  // read three sensors and append to the string
-  for(int analogPin = 0; analogPin < 2; analogPin++){
-    int sensor = analogRead(analogPin);
-    dataString += String(sensor);
-    if(analogPin < 1){
-      dataString += ",";
-    }
-  }
+  String dataString = "testing";
 
   // Open the file
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
@@ -50,13 +35,6 @@ void loop(){
   if(dataFile){
     dataFile.println(dataString);
     dataFile.close();
-    // print to the serial port too
-    Serial.println(dataString);
-  }
-
-  // If the file isn't open, error
-  else{
-    Serial.println("error opening datalog.txt");
   }
   delay(250);
 }
@@ -66,10 +44,7 @@ void loop(){
 //#include "SD.h"
 //#include <Wire.h>
 //
-//// A simple data logger for the Arduino analog pins
 //#define LOG_INTERVAL  100 // mills between entries
-//
-//// The analog pins that connect to the sensors
 //#define loadcellPin 0           // analog 0
 //
 //// Use digital pin 10 for the SD cs line
@@ -88,7 +63,6 @@ void loop(){
 //void setup() {
 //  Serial.begin(115200);
 //  Serial.println("Setup");
-//  pinMode(greenLEDpin, OUTPUT);
 //}
 //
 //
@@ -105,6 +79,7 @@ void loop(){
 //    // Setup the card
 //    if(start_rec){
 //      if(start_rec_init){
+//        Serial.begin(115200);
 //        // initialize the SD card
 //        Serial.print("Initializing SD card...");
 //        pinMode(10, OUTPUT);
