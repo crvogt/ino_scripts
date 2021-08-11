@@ -1,6 +1,10 @@
 #include <SD.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char* sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif  // __arm__
 
 const int chipSelect = 4;
 
@@ -10,84 +14,52 @@ int outPin = 2;
 int stateLED = LOW;
 int reading;
 int previous = HIGH;
-bool bstart_write = false;
-File data_file;
 
 long time = 0;
-long write_start_time = 0; 
-bool bstart_write_time = true;
+long debounce = 200;
 
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
-float x = -100000, y = -100000, z = -100000;
-sensors_event_t linear_accel_data;
+int int_var = 10;
+char char_var[] = "hitoyousir";
+
+char greetings[10] = {'h', 'i', 't', 'o', 'y', 'o', 'u', 's', 'i', 'r'};
+int int_array[1500];
 
 void setup(){
   Serial.begin(115200);
   pinMode(inPin, INPUT);
   pinMode(outPin, OUTPUT);
   pinMode(10, OUTPUT);
-
-  // Check SD is available
-  if(!SD.begin(chipSelect)){ 
-    Serial.println("Struggling to find SD card");
-  }
-  else{
-    // Open the file
-    Serial.println("Opening datalog.txt");
-    data_file = SD.open("datalog.txt", FILE_WRITE);
-  }
-
-  /* Initialise the sensor */
-  if (!bno.begin())
-  {
-    /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("No BNO055 detected ... Check your wiring or I2C ADDR!");
-    while (1);
-  }
+  for(int i = 0; i < 1000; i++)
+    int_array[i] = i;
 }
 
 void loop(){
-
-  // Get current time in ms
-  time = millis();
-
-  // Get accel from sensor
-  bno.getEvent(&linear_accel_data, Adafruit_BNO055::VECTOR_LINEARACCEL);
-
-  if(linear_accel_data.acceleration.z > 2){
-    bstart_write = true;
-  }
-  else if(!bstart_write){
-    Serial.println("Waiting to start");
-    delay(100);
-  }
-  if(bstart_write){
-    if(bstart_write_time){
-      write_start_time = time;
-      bstart_write_time = false;
-    }
-    if((time - write_start_time) < 1000){
-      Serial.print(linear_accel_data.acceleration.x);
-      Serial.print(",");
-      Serial.print(linear_accel_data.acceleration.y);
-      Serial.print(",");
-      Serial.print(linear_accel_data.acceleration.z);
-      Serial.print("\n");
-      
-      data_file.println(time);
-      
-      // delayMicroseconds(100);
-      delay(100);
-    }
-    else if((time - write_start_time) > 1000){
-      data_file.close();
-      Serial.println("File closed...");
-      while(1){}
-    }
-  }
+  for(int i = 0; i < 1000; i++)
+    int_array[i] = i;
+  
+  Serial.println();
+  Serial.println(sizeof(char_var));
+  int idx = sizeof(char_var)/sizeof(char_var[0]) - 1;
+  Serial.print(char_var[idx - 1]);
+  Serial.println();
+  Serial.println(sizeof(greetings));
+  Serial.println(sizeof(int_var));
+  Serial.println(sizeof(int_array));
+  Serial.println(freeMemory());
+  delay(1000);
+//  free(&int_array);
 }
 
-
+int freeMemory() {
+  char top;
+#ifdef __arm__
+  return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+  return &top - __brkval;
+#else  // __arm__
+  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif  // __arm__
+}
 
 //#include "SD.h"
 //#include <Wire.h>
