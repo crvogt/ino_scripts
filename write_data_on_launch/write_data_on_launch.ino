@@ -1,6 +1,6 @@
 #include <SD.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
+#include <Adafruit_ADXL345_U.h>
 
 const int chipSelect = 4;
 
@@ -13,13 +13,14 @@ int previous = HIGH;
 bool bstart_write = false;
 File data_file;
 
-long time = 0;
+long ltime = 0;
 long write_start_time = 0; 
 bool bstart_write_time = true;
 
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
-float x = -100000, y = -100000, z = -100000;
-sensors_event_t linear_accel_data;
+/* Assign a unique ID to this sensor at the same time */
+Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
+//Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+
 
 void setup(){
   Serial.begin(115200);
@@ -38,48 +39,60 @@ void setup(){
   }
 
   /* Initialise the sensor */
-  if (!bno.begin())
+  if (!accel.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("No BNO055 detected ... Check your wiring or I2C ADDR!");
+    Serial.print("No ADXL345 detected ... Check wiring");
     while (1);
+  }
+  else{
+    accel.setDataRate(ADXL345_DATARATE_3200_HZ);
+    accel.setRange(ADXL345_RANGE_2_G);
   }
 }
 
 void loop(){
 
   // Get current time in ms
-  time = millis();
+  ltime = millis();
 
   // Get accel from sensor
-  bno.getEvent(&linear_accel_data, Adafruit_BNO055::VECTOR_LINEARACCEL);
+  sensors_event_t event;
+  accel.getEvent(&event);
 
-  if(linear_accel_data.acceleration.z > 2){
+  if(event.acceleration.z > 12){
     bstart_write = true;
   }
   else if(!bstart_write){
     Serial.println("Waiting to start");
-    delay(100);
+//    delay(100);
+    //delayMicroseconds(100);
   }
   if(bstart_write){
     if(bstart_write_time){
-      write_start_time = time;
+      write_start_time = ltime;
       bstart_write_time = false;
     }
-    if((time - write_start_time) < 1000){
-      Serial.print(linear_accel_data.acceleration.x);
-      Serial.print(",");
-      Serial.print(linear_accel_data.acceleration.y);
-      Serial.print(",");
-      Serial.print(linear_accel_data.acceleration.z);
-      Serial.print("\n");
+    if((ltime - write_start_time) < 10000){
+    //      Serial.print(event.acceleration.x);
+    //      Serial.print(",");
+    //      Serial.print(event.acceleration.y);
+    //      Serial.print(",");
+    //      Serial.print(event.acceleration.z);
+    //      Serial.print("\n");
+
+      data_file.print(event.acceleration.x);
+      data_file.print(",");
+      data_file.print(event.acceleration.y);
+      data_file.print(",");
+      data_file.print(event.acceleration.z);
+      data_file.print("\n");
+//      data_file.println(time);
       
-      data_file.println(time);
-      
-      // delayMicroseconds(100);
-      delay(100);
+      //delayMicroseconds(100);
+//      delay(100);
     }
-    else if((time - write_start_time) > 1000){
+    else if((ltime - write_start_time) > 10000){
       data_file.close();
       Serial.println("File closed...");
       while(1){}
