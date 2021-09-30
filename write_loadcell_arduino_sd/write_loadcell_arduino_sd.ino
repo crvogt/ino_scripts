@@ -1,5 +1,5 @@
 #include <SD.h>
-const int chipSelect = 4;
+const int chipSelect = 10;
 
 int inPin = 3;
 int outPin = 2;
@@ -11,28 +11,22 @@ int previous = HIGH;
 long time = 0;
 long debounce = 200;
 
+String dataString = "";
+
+File dataFile;
+
 void setup(){
   Serial.begin(9600);
   pinMode(inPin, INPUT);
   pinMode(outPin, OUTPUT);
-}
 
-void loop(){
-  reading = digitalRead(inPin);
-
-  time = millis();
-
-  digitalWrite(outPin, stateLED);
-
-  previous = reading;
-
-  Serial.begin(9600);
+//   Serial.begin(9600);
   pinMode(10, OUTPUT);
 
   if(!SD.begin(chipSelect)){
-    //
+    Serial.println("Not beginning");
+    while(1){}
   }
-  String dataString = "";
 
   // read three sensors and append to the string
   for(int analogPin = 0; analogPin < 2; analogPin++){
@@ -44,7 +38,17 @@ void loop(){
   }
 
   // Open the file
-  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+  dataFile = SD.open("datalog.txt", FILE_WRITE);
+}
+
+void loop(){
+  reading = digitalRead(inPin);
+
+  time = millis();
+
+  digitalWrite(outPin, stateLED);
+
+  previous = reading;
 
   // if the file is available write to it
   if(dataFile){

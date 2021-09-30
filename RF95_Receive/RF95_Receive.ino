@@ -9,7 +9,7 @@
 #include <SPI.h>
 #include <RH_RF95.h>
 
-#define RFM95_CS 4
+#define RFM95_CS 6
 #define RFM95_RST 2
 #define RFM95_INT 3
 
@@ -68,21 +68,41 @@ void loop()
     // Should be a message for us now   
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
+    char ready_check[2] = "r";
     
     if (rf95.recv(buf, &len))
     {
       digitalWrite(LED, HIGH);
-      RH_RF95::printBuffer("Received: ", buf, len);
-      Serial.print("Got: ");
+//      RH_RF95::printBuffer("Received: ", buf, len);
+      Serial.print("Got:");
       Serial.println((char*)buf);
-       Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);
+      Serial.print(sizeof((char*)buf));
+      Serial.print(" ");
+      char *test_array = (char*)buf;
+      Serial.println(test_array[0]);
+      
+      int n;
+//      n = atoi((char*)buf);
+//      n = (char*)buf
+//      Serial.println(n);
+      if(n == 1234){
+        Serial.println("Received Number");
+      }
+      else if(test_array[0] == 'r'){
+        Serial.println("Got ready");
+      }
+      else{
+        Serial.println("no match");
+      }
+//      Serial.println((int)buf);
+//       Serial.print("RSSI: ");
+//      Serial.println(rf95.lastRssi(), DEC);
       
       // Send a reply
       uint8_t data[] = "And hello back to you";
       rf95.send(data, sizeof(data));
       rf95.waitPacketSent();
-      Serial.println("Sent a reply");
+//      Serial.println("Sent a reply");
       digitalWrite(LED, LOW);
     }
     else
