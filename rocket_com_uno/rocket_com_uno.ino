@@ -91,10 +91,6 @@ void loop()
   }
 
   if(record_flag){
-    // Send record message
-    if(Serial.available()){
-      Serial.write('r');
-    }
     // Begin transmitting
     char radiopacket[11];
     Serial.println((long int)pressure_hPa);

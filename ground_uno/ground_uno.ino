@@ -1,6 +1,5 @@
 #include <SD.h>
 #include <Wire.h>
-
 #include <RH_RF95.h>
 
 // LoRa

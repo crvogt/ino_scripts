@@ -1,18 +1,21 @@
-/*
- * Uno to communicate with ground station and save
- * pressure and temperature data as well as send 
- * to ground uno.
- * Triggers accelerometer recording on sibling uno
- */
 #include <SD.h>
-#include <SparkFun_ADXL345.h>
 #include <Wire.h>
+#include <SparkFun_ADXL345.h>
 
-/*******ADXL********/
+// LED
+#define INDICATOR_PIN 9
+// Pressure Sensor
+#define PRESSURE_PIN A0
+
+/******ADXL*********/
 ADXL345 adxl = ADXL345(5);
+int g_range = 16;
+int adxl_frequency = 3200;
+int z_threshold = 48;
+
+// Record for one minute
+long int record_time = 60000;
 long int lstart_time = 0;
-// Record for two minutes
-long int record_time = 120000;
 
 /********SD Card*****/
 const int chip_select = 10;
@@ -20,12 +23,14 @@ File data_file;
 
 void setup(){
   Serial.begin(9600);
-
-  // Turn on ADXL
+  // Our LED to tell us when we're recording
+  pinMode(INDICATOR_PIN, OUTPUT);
+    
+  // Turn on and set ADXL
   adxl.powerOn();
-  adxl.setRangeSetting(16);
+  adxl.setRangeSetting(g_range);
   adxl.setSpiBit(0);
-  adxl.setRate(3200);
+  adxl.setRate(adxl_frequency);
 
   // Setup SD card
   if(!SD.begin(chip_select)){
@@ -35,7 +40,6 @@ void setup(){
   else{
     Serial.println("FOUND SD CARD");
   }
-  while(1){}
   // Create a new file
   char filename[] = "LOGGER00.CSV";
   for (uint8_t i = 0; i < 100; i++) {
@@ -46,24 +50,27 @@ void setup(){
       data_file = SD.open(filename, FILE_WRITE); 
       break;  // leave the loop!
     }
-  }  
+  }
 }
 
 void loop(){
-  if(Serial.available()){
-    if(Serial.read() == 'r'){
-      Serial.write('w');
-      while(lstart_time - millis() < record_time){
-        int x, y, z;
-        adxl.readAccel(&x, &y, &z);
-        data_file.print(x);
-        data_file.print(", ");
-        data_file.print(y);
-        data_file.print(", ");
-        data_file.print(z);
-        data_file.print("\n");
-        delayMicroseconds(10);  
-      }
+  int x, y, z;
+  adxl.readAccel(&x, &y, &z);
+
+  if(z > z_threshold){
+    digitalWrite(INDICATOR_PIN, HIGH);
+    while(lstart_time - millis() < record_time){
+      data_file.print(x);
+      data_file.print(", ");
+      data_file.print(y);
+      data_file.print(", ");
+      data_file.print(z);
+      data_file.print(", ");
+      data_file.println(analogRead(PRESSURE_PIN));
+      delayMicroseconds(10);
     }
+  }
+  else{   
+    digitalWrite(INDICATOR_PIN, LOW);
   }
 }
