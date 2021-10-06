@@ -86,7 +86,7 @@ void setup(){
   adxl.singleTapINT(1);
   
 //attachInterrupt(digitalPinToInterrupt(interruptPin), ADXL_ISR, RISING);   // Attach Interrupt
-
+  Serial.println("Exiting setup");
 }
 
 /****************** MAIN CODE ******************/
@@ -97,6 +97,10 @@ void loop(){
   int x,y,z;   
   adxl.readAccel(&x, &y, &z);         // Read the accelerometer values and store them in variables declared above x,y,z
   Serial.println(z);
+  counter++;
+  if(counter == 10000){
+    Serial.println("10k reached");
+  }
   delayMicroseconds(10);
 //  ltime = millis();
 //  if(ltime > 1000 && ltime < 2000){
