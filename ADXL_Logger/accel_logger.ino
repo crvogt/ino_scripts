@@ -28,6 +28,22 @@ MinimumSerial MinSerial;
 
 #define INDICATOR_LED 7
 
+// Variables for shaker table test
+// Number of Gs to trigger
+int g_trigger = 1;
+// CHECK THIS make sure the resting g value is known
+int base_g = 112;
+// Are we at a high g?
+bool high_g = false;
+// Length of time to record in milliseconds
+long int record_time = 60000;
+// Where we hold data
+data_t accel_data;
+
+// Blink when we're in main loop
+long int blink_time = 500; // millis
+long int start_blink = 0;
+
 //------------------------------------------------------------------------------
 //Interval between data records in microseconds.
 const uint32_t LOG_INTERVAL_USEC = 200;
@@ -161,13 +177,6 @@ void createBinFile() {
   }
 }
 
-//------------------------------------------------------------------------------
-void logData() {
-  createBinFile();
-  recordBinFile();
-  renameBinFile();
-}
-
 //-----------------------------------------------------------------------------
 void renameBinFile() {
   while (sd.exists(binName)) {
@@ -235,10 +244,12 @@ void recordBinFile() {
   uint32_t overrun = 0;
   uint32_t overrunTotal = 0;
   uint32_t logTime = micros();
+
+  long int start_record = millis();
   while(1) {
      // Time for next data record.
     logTime += LOG_INTERVAL_USEC;
-    if (Serial.available()) {
+    if ((millis() - start_record) > record_time) {
       closeFile = true;
     }
     if (closeFile) {
@@ -248,7 +259,8 @@ void recordBinFile() {
         fullHead = fullHead < QUEUE_LAST ? fullHead + 1 : 0;
         curBlock = 0;
       }
-    } else {
+    } 
+    else {
       if (curBlock == 0 && emptyTop != 0) {
         curBlock = emptyStack[--emptyTop];
         if (emptyTop < minTop) {
@@ -317,6 +329,7 @@ void recordBinFile() {
       }
     }
   }
+  
   if (!sd.card()->writeStop()) {
     error("writeStop failed");
   }
@@ -362,15 +375,44 @@ void setup(void) {
     sd.initErrorPrint(&Serial);
     fatalBlink();
   }
+
+  start_blink = millis();
 }
 //------------------------------------------------------------------------------
 void loop(void) {
 #if WDT_YIELD_TIME_MICROS
   fatalBlink();
 #endif
- 
-    digitalWrite(INDICATOR_LED, HIGH);
-    logData();
-    digitalWrite(INDICATOR_LED, LOW);
+  // Create the binary file to store our data
+  createBinFile();
+  while(1){
+    // Let the world know we're in the loop
+    if((millis() - start_blink) > blink_time){
+      if(digitalRead(INDICATOR_LED)){
+        digitalWrite(INDICATOR_LED, LOW);
+      }
+      else{
+        digitalWrite(INDICATOR_LED, HIGH);
+      }
+      start_blink = millis();
+    }
 
+    // Get measurements
+    delayMicroseconds(250);
+    acquireData(&accel_data);
+    if(accel_data.accel[2] > (base_g + base_g * g_trigger)){
+      high_g = true;
+    }
+
+    // Wait for high G
+    if(high_g){
+      // Begin writing to SD card for n seconds
+      digitalWrite(INDICATOR_LED, HIGH);
+      recordBinFile();
+      digitalWrite(INDICATOR_LED, LOW);
+      // Attempt to rename the file to avoid overlap
+      renameBinFile();
+      while(1){}
+    }
+  }
 }
