@@ -412,7 +412,12 @@ void loop(void) {
       digitalWrite(INDICATOR_LED, LOW);
       // Attempt to rename the file to avoid overlap
       renameBinFile();
-      while(1){}
+      while(1){
+        digitalWrite(INDICATOR_LED, HIGH);
+        delay(100);
+        digitalWrite(INDICATOR_LED, LOW);
+        delay(100);
+      }
     }
   }
 }
