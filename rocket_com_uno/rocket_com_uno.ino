@@ -22,14 +22,15 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 /*****MPRLS******/
 Adafruit_MPRLS mpr = Adafruit_MPRLS(RESET_PIN, EOC_PIN);
 
-int record_flag = 0;
+/***Analog Pressure Sensor***/
+int analogPressurePin = A0;
+
+bool digital_press = true;
 
 void setup() 
 {
   // Begin Serial
-  while (!Serial);
   Serial.begin(9600);
-  delay(100);
   
   // Set the indicator LED
   pinMode(LED_PIN, OUTPUT);     
@@ -68,35 +69,24 @@ void setup()
 
 void loop()
 {
+  // Read pressure from each device
   float pressure_hPa = mpr.readPressure();
+  int analog_pressure = analogRead(analogPressurePin);
 
-  if (rf95.available())
-  {
-    // Should be a message for us now   
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-  
-    if (rf95.recv(buf, &len))
-    {
-      char *recv_array = (char *)buf;
-      if(recv_array[0] == 'r'){
-        record_flag = true;
-        digitalWrite(LED_PIN, HIGH);
-      }
-      else if(recv_array[0] == 's'){
-        record_flag = false;
-        digitalWrite(LED_PIN, LOW);
-      }
-    }
-  }
-
-  if(record_flag){
-    // Begin transmitting
-    char radiopacket[11];
+  // Begin transmitting
+  char radiopacket[11];
+  if(digital_press){
     Serial.println((long int)pressure_hPa);
     snprintf(radiopacket, 8, "%d", (long int)pressure_hPa);
-    Serial.println(radiopacket);
-    rf95.send((uint8_t *)radiopacket, 11);
-    rf95.waitPacketSent();
-  }  
+    digital_press = false;
+  }
+  else{
+    Serial.println((long int)analog_pressure);
+    snprintf(radiopacket, 8, "%d", (long int)analog_pressure);
+    digital_press = true;
+  }
+  
+  Serial.println(radiopacket);
+  rf95.send((uint8_t *)radiopacket, 11);
+  rf95.waitPacketSent();
 }
