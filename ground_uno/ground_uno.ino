@@ -26,24 +26,24 @@ void setup(){
   pinMode(INDICATOR_PIN, OUTPUT);
 
   // Setup SD card
-  if(!SD.begin(chip_select)){
-    Serial.println("Unable to find SD card");
-    while(1){}
-  }
-  else{
-    Serial.println("FOUND SD CARD");
-  }
-  // Create a new file
-  char filename[] = "LOGGER00.CSV";
-  for (uint8_t i = 0; i < 100; i++) {
-    filename[6] = i/10 + '0';
-    filename[7] = i%10 + '0';
-    if (! SD.exists(filename)) {
-      // only open a new file if it doesn't exist
-      data_file = SD.open(filename, FILE_WRITE); 
-      break;  // leave the loop!
-    }
-  }
+  // if(!SD.begin(chip_select)){
+  //   Serial.println("Unable to find SD card");
+  //   while(1){}
+  // }
+  // else{
+  //   Serial.println("FOUND SD CARD");
+  // }
+  // // Create a new file
+  // char filename[] = "LOGGER00.CSV";
+  // for (uint8_t i = 0; i < 100; i++) {
+  //   filename[6] = i/10 + '0';
+  //   filename[7] = i%10 + '0';
+  //   if (! SD.exists(filename)) {
+  //     // only open a new file if it doesn't exist
+  //     data_file = SD.open(filename, FILE_WRITE); 
+  //     break;  // leave the loop!
+  //   }
+  // }
   // Set the LoRa
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
@@ -86,7 +86,6 @@ void loop(){
         data_file.println((char *)buf);
       }
     }
-    // Begin recording incoming data
 
   }
   else{
