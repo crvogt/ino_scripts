@@ -15,7 +15,7 @@ const int toggle_read_pin = 7;
 
 /********SD Card*****/
 const int chip_select = 10;
-File data_file;
+// File data_file;
 
 /*******LoRa******/
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -83,7 +83,7 @@ void loop(){
     if(rf95.waitAvailableTimeout(1000)){
       if(rf95.recv(buf, &len)){
         Serial.println((char*)buf);
-        data_file.println((char *)buf);
+        // data_file.println((char *)buf);
       }
     }
 
