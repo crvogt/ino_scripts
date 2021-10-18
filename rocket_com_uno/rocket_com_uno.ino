@@ -77,12 +77,12 @@ void loop()
   char radiopacket[11];
   if(digital_press){
     Serial.println((long int)pressure_hPa);
-    snprintf(radiopacket, 8, "%d", (long int)pressure_hPa);
+    snprintf(radiopacket, 8, "D%d", (long int)pressure_hPa);
     digital_press = false;
   }
   else{
     Serial.println((long int)analog_pressure);
-    snprintf(radiopacket, 8, "%d", (long int)analog_pressure);
+    snprintf(radiopacket, 8, "A%d", (long int)analog_pressure);
     digital_press = true;
   }
   
