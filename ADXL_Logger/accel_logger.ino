@@ -138,6 +138,17 @@ void fatalBlink() {
   }
 }
 
+//--------------------------------------------------------------------------
+void deleteTempFile(){
+  // Delete old tmp file.
+  if (sd.exists(TMP_FILE_NAME)) {
+    Serial.println(F("Deleting tmp file " TMP_FILE_NAME));
+    if (!sd.remove(TMP_FILE_NAME)) {
+      error("Can't remove tmp file");
+    }
+  }
+}
+
 //-----------------------------------------------------------------------------
 void createBinFile() {
   // max number of blocks to erase per erase call
@@ -412,6 +423,7 @@ void loop(void) {
       digitalWrite(INDICATOR_LED, LOW);
       // Attempt to rename the file to avoid overlap
       renameBinFile();
+      deleteTempFile();
       while(1){
         digitalWrite(INDICATOR_LED, HIGH);
         delay(100);

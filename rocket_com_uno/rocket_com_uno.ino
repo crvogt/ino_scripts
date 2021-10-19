@@ -74,19 +74,11 @@ void loop()
   int analog_pressure = analogRead(analogPressurePin);
 
   // Begin transmitting
-  char radiopacket[11];
-  if(digital_press){
-    Serial.println((long int)pressure_hPa);
-    snprintf(radiopacket, 8, "D%d", (long int)pressure_hPa);
-    digital_press = false;
-  }
-  else{
-    Serial.println((long int)analog_pressure);
-    snprintf(radiopacket, 8, "A%d", (long int)analog_pressure);
-    digital_press = true;
-  }
+  char radiopacket[16];
+
+  snprintf(radiopacket, 13, "%d,%d", (int)pressure_hPa, (int)analog_pressure);
   
   Serial.println(radiopacket);
-  rf95.send((uint8_t *)radiopacket, 11);
+  rf95.send((uint8_t *)radiopacket, 16);
   rf95.waitPacketSent();
 }
