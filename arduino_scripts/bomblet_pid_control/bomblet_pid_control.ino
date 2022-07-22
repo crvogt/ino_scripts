@@ -29,10 +29,16 @@ uint16_t BNO055_SAMPLERATE_DELAY_MS = 10;
 // Check I2C device address (default is 0x29 or 0x28)
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
+// RPi comms
+int rpiIn = A0;
+int ledPin = 13;
+float sensorValue = 0;
+
 void setup()
 {
   //Initialize serial stream
   Serial.begin(115200);
+  
   // Check which pins to attach servos to
   servo_a.attach(9);
   servo_b.attach(11);
@@ -43,6 +49,9 @@ void setup()
     Serial.print("No BNO055 detected...");
     while(1);
   }
+
+  // Set LED pin to output
+  pinMode(ledPin, OUTPUT);
   
   // Allow time for setup
   delay(1000);
@@ -50,7 +59,8 @@ void setup()
 
 void loop()
 {
-  if(rpi_pin)
+  // Read pin from RPi to check for operation
+  if(analogRead(rpiIn) > 400) 
   {
     // Get the multiplication factor for servo control
     ctrl_out = get_ctrl();
