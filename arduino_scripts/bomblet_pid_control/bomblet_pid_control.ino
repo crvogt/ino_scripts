@@ -11,8 +11,8 @@ float prev_t = -1.0;
 float dt = 0.0;
 float err = 0.0;
 
-float Kp = 1.0, Kd = 0.0, Ki = 0.0;
-float sat = 1.0;
+float Kp = 5.0, Kd = 0.0, Ki = 0.0;
+float sat = 80.0;
 
 float ctrl_out = 0.0;
 
@@ -33,6 +33,7 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 int rpiIn = A0;
 int ledPin = 13;
 float sensorValue = 0;
+bool start_sig = false;
 
 void setup()
 {
@@ -41,7 +42,7 @@ void setup()
   
   // Check which pins to attach servos to
   servo_a.attach(9);
-  servo_b.attach(11);
+  servo_b.attach(10);
 
   // Initialize BNO
   if(!bno.begin())
@@ -59,14 +60,22 @@ void setup()
 
 void loop()
 {
+  Serial.println(analogRead(rpiIn));
   // Read pin from RPi to check for operation
-  if(analogRead(rpiIn) > 400) 
+  if(analogRead(rpiIn) > 400)
+  {
+    start_sig = true;
+  }
+  else
+  {
+    start_sig = false;
+  }
+ 
+  if(start_sig) 
   {
     // Get the multiplication factor for servo control
     ctrl_out = get_ctrl();
-    Serial.print("PID out value: ");
-    Serial.println(ctrl_out);
-
+    //Serial.println(ctrl_out);
     // Servos take a position value between 0 and 180
     // May be better to check  that a PWM input/lib is better
     servo_a_val = servo_mid_val + ctrl_out; 
