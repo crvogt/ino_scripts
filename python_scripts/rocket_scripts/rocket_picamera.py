@@ -1,32 +1,32 @@
 import picamera
 import time
+import os
 
 camera = picamera.PiCamera()
 iso_val = 100
 exp_val = 32000
 # Recording time in minutes
 # at 1024x600 this is 10M per min at default FPS
-recording_time = 30
+recording_time = 90
 # Convert to seconds
 recording_time *= 60
 
+# How we want to run the code
 tune_camera = False
-flash_led = False
 record_vid = True
+
+# Setup video file name
+base = "/home/pi/launch_recordings"
+# Check if dir exists, if not, create it
+if not os.path.isdir(base):
+    print("{} does not exist... creating...".format(base))
+    os.mkdir(base)
+ext = ".h264"
+vid_file = "launch_vid_"
 
 # Set iso value and allow values to settle
 camera.iso = iso_val
 time.sleep(2)
-
-if flash_led:
-    print("Flashing LED...")
-    counter = 0
-    while counter < 10:
-        camera.led = True
-        time.sleep(1)
-        camera.led = False
-        time.sleep(1)
-        counter += 1
 
 if tune_camera:
     print("Camera resolution ", str(camera.resolution))
@@ -40,6 +40,15 @@ if tune_camera:
     camera.awb_gains = g
 
 elif record_vid:
-    camera.exposure_mode = 'off'
-    camera.shutter_speed = exp_val
-    camera.start_recording('test_video
+    # Create video file, checking it's unique
+    dir_objs = os.listdir(base)
+    vid_count = 0
+    vid_file = vid_file + str(vid_count).zfill(4)
+    while True:
+        if vid_file in dir_objs:
+            vid_count += 1
+        else:
+            break
+    print("Recording to file {}...")
+    # camera.start_recording(vid_file)
+    # camera.wait_recording(recording_time)
