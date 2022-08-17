@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import apriltag
 
-imagepath = "apriltagrobots_overlay.jpg"
+imagepath = "../../data/apriltags/apriltag_robots.jpg"
 image = cv2.imread(imagepath)
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 print("[INFO] detecting AprilTags...")
