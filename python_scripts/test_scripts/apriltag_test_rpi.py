@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import apriltag
+from apriltag import apriltag
 
 imagepath = "../../data/apriltags/apriltag_robots.jpg"
 image = cv2.imread(imagepath)
