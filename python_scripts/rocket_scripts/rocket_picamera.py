@@ -2,6 +2,16 @@ import picamera
 import time
 import os
 
+# Setup video file name
+base = "/home/pi/launch_recordings/"
+# Check if dir exists, if not, create it
+if not os.path.isdir(base):
+    print("{} does not exist... creating...".format(base))
+    os.mkdir(base)
+ext = ".h264"
+vid_start = "launch_vid_"
+vid_file = ""
+
 camera = picamera.PiCamera()
 iso_val = 100
 exp_val = 32000
@@ -14,16 +24,6 @@ recording_time *= 60
 # How we want to run the code
 tune_camera = False
 record_vid = True
-
-# Setup video file name
-base = "/home/pi/launch_recordings"
-# Check if dir exists, if not, create it
-if not os.path.isdir(base):
-    print("{} does not exist... creating...".format(base))
-    os.mkdir(base)
-ext = ".h264"
-vid_start = "launch_vid_"
-vid_file = ""
 
 # Set iso value and allow values to settle
 camera.iso = iso_val
@@ -45,11 +45,12 @@ elif record_vid:
     dir_objs = os.listdir(base)
     vid_count = 0
     while True:
-        vid_file = vid_start + str(vid_count).zfill(4)
+        vid_file = vid_start + str(vid_count).zfill(4) + ext
         if vid_file in dir_objs:
             vid_count += 1
         else:
             break
+    vid_file = base + vid_file
     print("Recording to file {}...".format(vid_file))
-    # camera.start_recording(vid_file)
-    # camera.wait_recording(recording_time)
+    camera.start_recording(vid_file)
+    camera.wait_recording(recording_time)
