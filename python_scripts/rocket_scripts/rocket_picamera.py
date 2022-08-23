@@ -22,7 +22,8 @@ if not os.path.isdir(base):
     print("{} does not exist... creating...".format(base))
     os.mkdir(base)
 ext = ".h264"
-vid_file = "launch_vid_"
+vid_start = "launch_vid_"
+vid_file = ""
 
 # Set iso value and allow values to settle
 camera.iso = iso_val
@@ -43,12 +44,12 @@ elif record_vid:
     # Create video file, checking it's unique
     dir_objs = os.listdir(base)
     vid_count = 0
-    vid_file = vid_file + str(vid_count).zfill(4)
     while True:
+        vid_file = vid_start + str(vid_count).zfill(4)
         if vid_file in dir_objs:
             vid_count += 1
         else:
             break
-    print("Recording to file {}...")
+    print("Recording to file {}...".format(vid_file))
     # camera.start_recording(vid_file)
     # camera.wait_recording(recording_time)
