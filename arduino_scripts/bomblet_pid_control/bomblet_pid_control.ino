@@ -3,6 +3,12 @@
 // Libraries required for BNO055
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
+// Libraries required for MPRLS
+#include <Wire.h>
+#include "Adafruit_MPRLS.h"
+// Data smoothing
+#include <movingAvg.h>
+#include <math.h>
 
 // Controller variables
 float integral = 0.0;
@@ -29,11 +35,20 @@ uint16_t BNO055_SAMPLERATE_DELAY_MS = 10;
 // Check I2C device address (default is 0x29 or 0x28)
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
-// RPi comms
-int rpiIn = A0;
-int ledPin = 13;
-float sensorValue = 0;
-bool start_sig = false;
+// MPRLS variables
+#define RESET_PIN -1
+#define EOC_PIN -1
+Adafruit_MPRLS mpr = Adafruit_MPRLS(RESET_PIN, EOC_PIN)
+// Get a moving average of pressure changes
+int mApnts = 20;
+movingAvg mAdp(mApnts);
+
+// Note the starting pressure
+float start_pressure = -1000.0; 
+float active_pressure = -1000.0;
+float scaling_factor = 1000.0;
+float current_pressure = -1000.0;
+float previous_pressure = -1000.0;
 
 void setup()
 {
@@ -51,6 +66,18 @@ void setup()
     while(1);
   }
 
+  // Initialize MPRLS
+  if(!mpr.begin()){
+    Serial.println("Failed to communicate with MPRLS sensor");
+    while(1) {
+      delay(10);
+    }
+  } 
+  Serial.println("Found MPRLS sensor");
+
+  // Initialize movingAvg
+  mAdp.begin();
+
   // Set LED pin to output
   pinMode(ledPin, OUTPUT);
   
@@ -60,15 +87,29 @@ void setup()
 
 void loop()
 {
-  Serial.println(analogRead(rpiIn));
-  // Read pin from RPi to check for operation
-  if(analogRead(rpiIn) > 400)
+  // Add readings to mAdp
+  if(mAdp.getCount() == mApnts){
+    previous_pressure = current_pressure;
+    current_pressure = mpr.readPressure() * scaling_factor;
+    if(previous_pressure > -900)
+      mAdp.reading(int(roundf(current_pressure - previous_pressure)));
+  }  
+  else{
+    mAdp.reading(int(roundf(mpr.readPressure() * scaling_factor)));
+  }
+
+  // Wait for positive pressure gradient 
+  if(mAdp.getAvg() > 0)
   {
     start_sig = true;
   }
   else
   {
     start_sig = false;
+    if((start_pressure < -100) && (mAdp.getCount() == mApnts)){
+      delay(100);
+      start_pressure = float(mAdp.getAvg()) / scaling_factor;
+    }
   }
  
   if(start_sig) 
