@@ -86,13 +86,6 @@ void setup()
   // Initialize movingAvg
   mAdp.begin();
 
-  // Set LED pin to output
-  // pinMode(ledPin, OUTPUT);
-  
-  // Allow time for setup
-  delay(1000);
-}
-
 void loop()
 {
   // Add readings to mAdp
