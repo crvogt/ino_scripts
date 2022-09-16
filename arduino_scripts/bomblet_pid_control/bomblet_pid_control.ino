@@ -11,17 +11,18 @@
 #include <math.h>
 
 // Controller variables
+bool start_sig = false;
 float integral = 0.0;
 float prev_err = 0.0;
 float prev_t = -1.0;
 float dt = 0.0;
 float err = 0.0;
-
+// PID parameters
 float Kp = 5.0, Kd = 0.0, Ki = 0.0;
 float sat = 80.0;
-
+// Control value initialization
 float ctrl_out = 0.0;
-
+// Velocity goal in y axis
 double y_goal = 0.0;
 
 // Servo variables
@@ -38,15 +39,17 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 // MPRLS variables
 #define RESET_PIN -1
 #define EOC_PIN -1
-Adafruit_MPRLS mpr = Adafruit_MPRLS(RESET_PIN, EOC_PIN)
+Adafruit_MPRLS mpr = Adafruit_MPRLS(RESET_PIN, EOC_PIN);
 // Get a moving average of pressure changes
 int mApnts = 20;
 movingAvg mAdp(mApnts);
 
 // Note the starting pressure
+bool init_flag = true;
+float threshold_pressure = 2.0;
 float start_pressure = -1000.0; 
 float active_pressure = -1000.0;
-float scaling_factor = 1000.0;
+float scaling_factor = 10.0;
 float current_pressure = -1000.0;
 float previous_pressure = -1000.0;
 
@@ -65,6 +68,9 @@ void setup()
     Serial.print("No BNO055 detected...");
     while(1);
   }
+  else{
+    Serial.println("BNO055 detected...");
+  }
 
   // Initialize MPRLS
   if(!mpr.begin()){
@@ -72,14 +78,16 @@ void setup()
     while(1) {
       delay(10);
     }
-  } 
-  Serial.println("Found MPRLS sensor");
+  }
+  else{ 
+    Serial.println("Found MPRLS sensor");
+  }
 
   // Initialize movingAvg
   mAdp.begin();
 
   // Set LED pin to output
-  pinMode(ledPin, OUTPUT);
+  // pinMode(ledPin, OUTPUT);
   
   // Allow time for setup
   delay(1000);
@@ -89,41 +97,49 @@ void loop()
 {
   // Add readings to mAdp
   if(mAdp.getCount() == mApnts){
+    if(init_flag){
+      start_pressure = mAdp.getAvg()/scaling_factor; //mpr.readPressure();
+      Serial.println(mAdp.getCount());
+      Serial.println("Start pressure: ");
+      Serial.println(start_pressure);
+      init_flag = false;
+    }
     previous_pressure = current_pressure;
     current_pressure = mpr.readPressure() * scaling_factor;
     if(previous_pressure > -900)
       mAdp.reading(int(roundf(current_pressure - previous_pressure)));
   }  
   else{
+    //Serial.println("Adding reading...");
+    Serial.println(mpr.readPressure());
     mAdp.reading(int(roundf(mpr.readPressure() * scaling_factor)));
   }
 
-  // Wait for positive pressure gradient 
-  if(mAdp.getAvg() > 0)
+  // Wait for positive pressure gradient and that we've ascended enough
+  //if(!init_flag) //bypass
+  if((mAdp.getAvg() > 0) && (abs(current_pressure - start_pressure) > threshold_pressure))
   {
     start_sig = true;
-  }
-  else
-  {
-    start_sig = false;
-    if((start_pressure < -100) && (mAdp.getCount() == mApnts)){
-      delay(100);
-      start_pressure = float(mAdp.getAvg()) / scaling_factor;
-    }
+    // Delay while bomblet is deployed
+    Serial.println("Starting fin control...");
+    delay(4000);
   }
  
   if(start_sig) 
   {
-    // Get the multiplication factor for servo control
-    ctrl_out = get_ctrl();
-    //Serial.println(ctrl_out);
-    // Servos take a position value between 0 and 180
-    // May be better to check  that a PWM input/lib is better
-    servo_a_val = servo_mid_val + ctrl_out; 
-    servo_b_val = servo_mid_val + ctrl_out;
-
-    servo_a.write(servo_a_val);
-    servo_b.write(servo_b_val);
+    // Make sure we don't trip delay() again
+    while(1){
+      // Get the multiplication factor for servo control
+      ctrl_out = get_ctrl();
+      //Serial.println(ctrl_out);
+      // Servos take a position value between 0 and 180
+      // May be better to check  that a PWM input/lib is better
+      servo_a_val = servo_mid_val + ctrl_out; 
+      servo_b_val = servo_mid_val + ctrl_out;
+  
+      servo_a.write(servo_a_val);
+      servo_b.write(servo_b_val);
+    }
   }
 }
 
