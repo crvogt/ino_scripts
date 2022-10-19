@@ -1,6 +1,7 @@
 import picamera
 import time
 import os
+import RPi.GPIO as GPIO
 
 # Setup video file name
 base = "/home/pi/launch_recordings/"
@@ -11,6 +12,11 @@ ext = ".h264"
 vid_start = "bomblet_vid_"
 vid_file = ""
 
+# Setup LED indicator
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT, initial=GPIO.LOW)
+
 camera = picamera.PiCamera()
 # Recording time in minutes
 # at 1024x600 this is 10M per min at default FPS
@@ -18,7 +24,7 @@ recording_time = 90
 # Convert to seconds
 recording_time *= 60
 
-# Set iso value and allow values to settle
+# Allow values to settle
 time.sleep(2)
 
 # Create video file, checking it's unique
@@ -33,4 +39,6 @@ while True:
 vid_file = base + vid_file
 
 camera.start_recording(vid_file)
+GPIO.output(11, GPIO.HIGH)
 camera.wait_recording(recording_time)
+GPIO.output(11, GPIO.LOW)
