@@ -85,12 +85,29 @@ void setup()
 
   // Initialize movingAvg
   mAdp.begin();
+}
 
 void loop()
 {
+  /*
+   * Desc
+   * Start a moving average for our pressure gradient.
+   * We first need to populate the mAdp structure
+   * Theory - on ascent, the pressure gradient is negative
+   * on descent, the sign swaps, at which point we start 
+   * a timer and activate the fins and controller
+   * 
+   * TODO
+   * 
+   * Test gradient switch
+   * 
+   * Test PID output
+   * 
+   */
   // Add readings to mAdp
   if(mAdp.getCount() == mApnts){
     if(init_flag){
+      // Scaling was added to avoid some loss of resolution
       start_pressure = mAdp.getAvg()/scaling_factor; //mpr.readPressure();
       Serial.println(mAdp.getCount());
       Serial.println("Start pressure: ");
