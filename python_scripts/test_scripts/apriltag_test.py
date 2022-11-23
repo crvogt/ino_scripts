@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 import apriltag
 
-imagepath = "../../data/apriltags/apriltag_robots.jpg"
+imagepath = "../../data/imgs/v2_3280_2464_april.jpg"
 image = cv2.imread(imagepath)
+image = cv2.resize(image, [image.shape[1]//10, image.shape[0]//10])
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 print("[INFO] detecting AprilTags...")
 options = apriltag.DetectorOptions(families="tag36h11")
@@ -36,4 +37,6 @@ for r in results:
 
 cv2.imshow("Image", image)
 cv2.waitKey(0)
+
+cv2.imwrite("v2_april_highlight.png", image)
     
