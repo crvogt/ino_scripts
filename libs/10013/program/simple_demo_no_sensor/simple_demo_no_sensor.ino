@@ -59,9 +59,9 @@ Omni3WD Omni(&wheel1,&wheel2,&wheel3);
 /******************************************/
 // demo
 void demoNoSensors(unsigned int speedMMPS) {   
-  wheelBackSetSpeedMMPS(0, DIR_ADVANCE);
-  wheelRightSetSpeedMMPS(speedMMPS, DIR_BACKOFF);
-  wheelLeftSetSpeedMMPS(speedMMPS, DIR_ADVANCE);
+  Omni.wheelBackSetSpeedMMPS(0, DIR_ADVANCE);
+  Omni.wheelRightSetSpeedMMPS(speedMMPS, DIR_BACKOFF);
+  Omni.wheelLeftSetSpeedMMPS(speedMMPS, DIR_ADVANCE);
 
   Omni.PIDRegulate();
 }
